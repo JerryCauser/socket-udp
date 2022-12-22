@@ -12,7 +12,7 @@ import { EventEmitter, once } from 'node:events'
  * @param {UDPClientOptions} [options={}]
  * @constructor
  */
-class Client extends EventEmitter {
+class UDPClient extends EventEmitter {
   /** @type {number} */
   #port
 
@@ -59,4 +59,4 @@ class Client extends EventEmitter {
   }
 }
 
-export default Client
+export default UDPClient
