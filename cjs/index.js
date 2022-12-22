@@ -179,7 +179,7 @@ var socket_default = UDPSocket;
 // src/client.js
 var import_node_dgram2 = __toESM(require("node:dgram"), 1);
 var import_node_events2 = require("node:events");
-var Client = class extends import_node_events2.EventEmitter {
+var UDPClient = class extends import_node_events2.EventEmitter {
   #port;
   #host;
   #type;
@@ -205,7 +205,7 @@ var Client = class extends import_node_events2.EventEmitter {
     this.#socket.send(buffer);
   }
 };
-var client_default = Client;
+var client_default = UDPClient;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   DEFAULT_PORT,
