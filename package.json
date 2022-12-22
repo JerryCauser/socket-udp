@@ -1,7 +1,7 @@
 {
   "name": "udp-socket",
   "version": "0.1.0",
-  "description": "UDP Socket and Client with built-in encryption",
+  "description": "Basic UDP Socket and Client",
   "main": "cjs/index.js",
   "module": "index.js",
   "exports": {
@@ -52,10 +52,10 @@
   },
   "homepage": "https://github.com/JerryCauser/udp-socket#readme",
   "devDependencies": {
-    "@types/node": "^18.6.4",
-    "esbuild": "^0.14.53",
-    "husky": "^8.0.1",
-    "prettier": "^2.7.1",
+    "@types/node": "^18.11.17",
+    "esbuild": "^0.16.10",
+    "husky": "^8.0.2",
+    "prettier": "^2.8.1",
     "standard": "^17.0.0",
     "standard-version": "^9.5.0"
   },
