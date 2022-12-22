@@ -11,19 +11,15 @@ import { DEFAULT_PORT } from './constants.js'
  * @property {string} [type='udp4']
  * @property {number} [port=44002]
  * @property {string} [host=('127.0.0.1'|'::1')]
- * @property {string | ((payload: Buffer) => Buffer)} [decryption]
- *    if passed string - will be applied aes-256-ctr encryption with passed string as secret, so it should be 64char long;
- *    if passed function - will be used that function to encrypt every message;
- *    if passed undefined - will not use any kind of encryption
  * @property {boolean} [objectMode=false] makes this stream to work in object mode with autoparse
- * @property {boolean} [injectMeta=false] makes this stream to pass payload with meta info like ipaddress, port, etc.
+ * @property {boolean} [headless=true] makes this stream to pass payload without meta info like ipaddress, port, etc.
  *       useful when you want to stream video or filedata right into file
  *
  * @extends {ReadableOptions}
  */
 
 /**
- * @class
+ * @class UDPSocket
  * @param {UDPSocketOptions} [options={}]
  */
 class UDPSocket extends Readable {
@@ -46,7 +42,7 @@ class UDPSocket extends Readable {
   #objectMode = false
 
   /** @type {boolean} */
-  #injectMeta = false
+  #headless = true
 
   /** @type {boolean} */
   #allowPush = true
@@ -70,7 +66,7 @@ class UDPSocket extends Readable {
     port = DEFAULT_PORT,
     host = type === 'udp4' ? '127.0.0.1' : '::1',
     decryption,
-    injectMeta = false,
+    headless = true,
     objectMode = false,
     ...readableOptions
   } = {}) {
@@ -80,7 +76,7 @@ class UDPSocket extends Readable {
     this.#host = host
     this.#type = type
 
-    this.#injectMeta = injectMeta
+    this.#headless = headless
     this.#objectMode = objectMode
 
     this.#handleSocketMessage = (data, head) => this.handleMessage(data, head)
@@ -186,7 +182,7 @@ class UDPSocket extends Readable {
    * @param {MessageHead} head
    */
   handleMessage (body, head) {
-    if (!this.#injectMeta) {
+    if (this.#headless) {
       return this.#addMessage(body)
     }
 
@@ -196,7 +192,7 @@ class UDPSocket extends Readable {
       return this.#addMessage(head)
     } else {
       return this.#addMessage(
-        Buffer.concat([UDPSocket.serializeMeta(head), body])
+        Buffer.concat([UDPSocket.serializeHead(head), body])
       )
     }
   }
@@ -205,7 +201,7 @@ class UDPSocket extends Readable {
    * @param {MessageHead} head
    * @returns {Buffer}
    */
-  static serializeMeta (head) {
+  static serializeHead (head) {
     const buffer = Buffer.alloc(5 + (head.address?.length || 0))
 
     buffer.writeUintBE(head.size, 0, 2)
@@ -217,11 +213,11 @@ class UDPSocket extends Readable {
   }
 
   /**
-   * Usable when injectMeta=true and objectMode=false
+   * Usable when headless=true and objectMode=false
    * @param {Buffer} payload
    * @returns {MessageHead}
    */
-  static extractMeta (payload) {
+  static deserializeHead (payload) {
     const size = payload.readUintBE(0, 2)
 
     return {
