@@ -55,15 +55,15 @@ var UDPSocket = class extends import_node_stream.Readable {
   #handleSocketError = (error) => {
     this.destroy(error);
   };
-  constructor({
-    type = "udp4",
-    port = DEFAULT_PORT,
-    host = type === "udp4" ? "127.0.0.1" : "::1",
-    decryption,
-    headless = true,
-    objectMode = false,
-    ...readableOptions
-  } = {}) {
+  constructor(options) {
+    const {
+      type = "udp4",
+      port = DEFAULT_PORT,
+      host = type === "udp4" ? "127.0.0.1" : "::1",
+      headless = true,
+      objectMode = false,
+      ...readableOptions
+    } = options ?? {};
     super({ ...readableOptions, objectMode });
     this.#port = port;
     this.#host = host;
@@ -85,11 +85,17 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#sendBufferedMessages();
     this.#allowPush = this.#messages.length === 0;
   }
+  get origin() {
+    return this.#socket;
+  }
   get address() {
-    return this.#socket.address().address;
+    return this.origin.address().address;
   }
   get port() {
-    return this.#socket.address().port;
+    return this.origin.address().port;
+  }
+  get headless() {
+    return this.#headless;
   }
   #addMessage(message) {
     if (this.#allowPush) {
@@ -142,7 +148,7 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#socket.off("message", this.#handleSocketMessage);
   }
   handleMessage(body, head) {
-    if (this.#headless) {
+    if (this.headless) {
       return this.#addMessage(body);
     }
     if (this.#objectMode) {
@@ -185,12 +191,13 @@ var UDPClient = class extends import_node_events2.EventEmitter {
   #type;
   #connecting;
   #socket;
-  constructor({
-    type = "udp4",
-    port = 44002,
-    host = type === "udp4" ? "127.0.0.1" : "::1",
-    ...eventEmitterOptions
-  } = {}) {
+  constructor(options) {
+    const {
+      type = "udp4",
+      port = 44002,
+      host = type === "udp4" ? "127.0.0.1" : "::1",
+      ...eventEmitterOptions
+    } = options ?? {};
     super(eventEmitterOptions);
     this.#port = port;
     this.#host = host;

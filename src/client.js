@@ -2,13 +2,6 @@ import dgram from 'node:dgram'
 import { EventEmitter, once } from 'node:events'
 
 /**
- * @typedef {object} UDPClientOptions
- * @property {string} [type='udp4']
- * @property {number} [port=44002]
- * @property {string} [host=('127.0.0.1'|'::1')]
- */
-
-/**
  * @param {UDPClientOptions} [options={}]
  * @constructor
  */
@@ -31,12 +24,14 @@ class UDPClient extends EventEmitter {
   /**
    * @param {UDPClientOptions} [options]
    */
-  constructor ({
-    type = 'udp4',
-    port = 44002,
-    host = type === 'udp4' ? '127.0.0.1' : '::1',
-    ...eventEmitterOptions
-  } = {}) {
+  constructor (options) {
+    const {
+      type = 'udp4',
+      port = 44002,
+      host = type === 'udp4' ? '127.0.0.1' : '::1',
+      ...eventEmitterOptions
+    } = options ?? {}
+
     super(eventEmitterOptions)
 
     this.#port = port

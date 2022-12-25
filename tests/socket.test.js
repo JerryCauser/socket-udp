@@ -187,7 +187,10 @@ async function socketTest (UDPSocket) {
     const results = { fails: [] }
 
     const client = await createUDPClient()
-    const socket = await createUDPSocket({ port: DEFAULT_PORT, headless: false })
+    const socket = await createUDPSocket({
+      port: DEFAULT_PORT,
+      headless: false
+    })
     const payload = crypto.randomBytes(PACKET_SIZE)
 
     client.send(payload, DEFAULT_PORT)

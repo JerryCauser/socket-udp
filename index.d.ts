@@ -2,19 +2,16 @@
 import type { EventEmitter } from 'node:events'
 import type { Buffer } from 'node:buffer'
 import type { Readable } from 'node:stream'
+import type * as dgram from  'node:dgram'
 
-export const DEFAULT_PORT: 44002
+export const DEFAULT_PORT: number
 
-export type MessageHead = {
-    address: string
-    family: ('IPv4' | 'IPv6')
-    port: number
-    size: number
+export interface MessageHead extends dgram.RemoteInfo {
     body?: Buffer
 }
 
 export type UDPSocketOptions = {
-    type?: string
+    type?: dgram.SocketType
     port?: number
     host?: string
     /**
@@ -26,23 +23,25 @@ export type UDPSocketOptions = {
      * useful when you want to stream video or filedata right into file
      */
     headless?: boolean
-}
+} | undefined
 
 export class UDPSocket extends Readable {
     static serializeHead (head: MessageHead): Buffer
     static deserializeHead (payload: Buffer): MessageHead
 
     constructor (options?: UDPSocketOptions)
-    get address (): any
-    get port (): any
+    get origin (): dgram.Socket
+    get address (): string
+    get port (): number
+    get headless (): boolean
     handleMessage (body: Buffer | any, head: MessageHead): void
 }
 
 export type UDPClientOptions = {
-    type?: string
+    type?: dgram.SocketType
     port?: number
     host?: string
-}
+} | undefined
 
 export class UDPClient extends EventEmitter {
     constructor (options?: UDPClientOptions)

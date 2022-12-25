@@ -4,20 +4,6 @@ import { Buffer } from 'node:buffer'
 import { Readable } from 'node:stream'
 import { DEFAULT_PORT } from './constants.js'
 
-/** @typedef {{address: string, family: ('IPv4'|'IPv6'), port: number, size: number, body?: Buffer}} MessageHead */
-
-/**
- * @typedef {object} UDPSocketOptions
- * @property {string} [type='udp4']
- * @property {number} [port=44002]
- * @property {string} [host=('127.0.0.1'|'::1')]
- * @property {boolean} [objectMode=false] makes this stream to work in object mode with autoparse
- * @property {boolean} [headless=true] makes this stream to pass payload without meta info like ipaddress, port, etc.
- *       useful when you want to stream video or filedata right into file
- *
- * @extends {ReadableOptions}
- */
-
 /**
  * @class UDPSocket
  * @param {UDPSocketOptions} [options={}]
@@ -50,7 +36,7 @@ class UDPSocket extends Readable {
   /** @type {(string | Buffer | Uint8Array)[]} */
   #messages = []
 
-  /** @type {function (data:Buffer, head:object):void} */
+  /** @type {function (data:Buffer, head:MessageHead):void} */
   #handleSocketMessage
 
   /** @type {function (object:Error):void} */
@@ -61,15 +47,16 @@ class UDPSocket extends Readable {
   /**
    * @param {UDPSocketOptions} [options]
    */
-  constructor ({
-    type = 'udp4',
-    port = DEFAULT_PORT,
-    host = type === 'udp4' ? '127.0.0.1' : '::1',
-    decryption,
-    headless = true,
-    objectMode = false,
-    ...readableOptions
-  } = {}) {
+  constructor (options) {
+    const {
+      type = 'udp4',
+      port = DEFAULT_PORT,
+      host = type === 'udp4' ? '127.0.0.1' : '::1',
+      headless = true,
+      objectMode = false,
+      ...readableOptions
+    } = options ?? {}
+
     super({ ...readableOptions, objectMode })
 
     this.#port = port
@@ -104,12 +91,20 @@ class UDPSocket extends Readable {
     this.#allowPush = this.#messages.length === 0
   }
 
+  get origin () {
+    return this.#socket
+  }
+
   get address () {
-    return this.#socket.address().address
+    return this.origin.address().address
   }
 
   get port () {
-    return this.#socket.address().port
+    return this.origin.address().port
+  }
+
+  get headless () {
+    return this.#headless
   }
 
   /**
@@ -182,7 +177,7 @@ class UDPSocket extends Readable {
    * @param {MessageHead} head
    */
   handleMessage (body, head) {
-    if (this.#headless) {
+    if (this.headless) {
       return this.#addMessage(body)
     }
 

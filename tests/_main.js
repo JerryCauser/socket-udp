@@ -7,10 +7,7 @@ import socketTest from './socket.test.js'
  *  [x] socket
  */
 
-export default async function _main (
-  type,
-  { UDPClient, UDPSocket }
-) {
+export default async function _main (type, { UDPClient, UDPSocket }) {
   console.log(`${type} Tests Started\n`)
   let errorsCount = 0
 
