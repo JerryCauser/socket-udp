@@ -19,10 +19,10 @@ export type UDPSocketOptions = {
      */
     objectMode?: boolean
     /**
-     * makes this stream to pass payload without meta info like ipaddress, port, etc.
+     * makes this stream to pass payload with or without meta info like ipaddress, port, etc.
      * useful when you want to stream video or filedata right into file
      */
-    headless?: boolean
+    headed?: boolean
 } | undefined
 
 export class UDPSocket extends Readable {
@@ -33,7 +33,7 @@ export class UDPSocket extends Readable {
     get origin (): dgram.Socket
     get address (): string
     get port (): number
-    get headless (): boolean
+    get headed (): boolean
     handleMessage (body: Buffer | any, head: MessageHead): void
 }
 

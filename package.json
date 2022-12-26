@@ -41,8 +41,10 @@
   },
   "keywords": [
     "udp socket",
+    "udp stream",
     "udp",
     "socket",
+    "stream",
     "udp client"
   ],
   "license": "MIT",

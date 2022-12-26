@@ -28,7 +28,7 @@ class UDPSocket extends Readable {
   #objectMode = false
 
   /** @type {boolean} */
-  #headless = true
+  #headed = false
 
   /** @type {boolean} */
   #allowPush = true
@@ -52,7 +52,7 @@ class UDPSocket extends Readable {
       type = 'udp4',
       port = DEFAULT_PORT,
       host = type === 'udp4' ? '127.0.0.1' : '::1',
-      headless = true,
+      headed = false,
       objectMode = false,
       ...readableOptions
     } = options ?? {}
@@ -63,7 +63,7 @@ class UDPSocket extends Readable {
     this.#host = host
     this.#type = type
 
-    this.#headless = headless
+    this.#headed = headed
     this.#objectMode = objectMode
 
     this.#handleSocketMessage = (data, head) => this.handleMessage(data, head)
@@ -103,8 +103,8 @@ class UDPSocket extends Readable {
     return this.origin.address().port
   }
 
-  get headless () {
-    return this.#headless
+  get headed () {
+    return this.#headed
   }
 
   /**
@@ -177,7 +177,7 @@ class UDPSocket extends Readable {
    * @param {MessageHead} head
    */
   handleMessage (body, head) {
-    if (this.headless) {
+    if (!this.headed) {
       return this.#addMessage(body)
     }
 
@@ -208,7 +208,7 @@ class UDPSocket extends Readable {
   }
 
   /**
-   * Usable when headless=true and objectMode=false
+   * Useful when headed=true and objectMode=false
    * @param {Buffer} payload
    * @returns {MessageHead}
    */

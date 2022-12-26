@@ -48,7 +48,7 @@ var UDPSocket = class extends import_node_stream.Readable {
   #type;
   #socket;
   #objectMode = false;
-  #headless = true;
+  #headed = false;
   #allowPush = true;
   #messages = [];
   #handleSocketMessage;
@@ -60,7 +60,7 @@ var UDPSocket = class extends import_node_stream.Readable {
       type = "udp4",
       port = DEFAULT_PORT,
       host = type === "udp4" ? "127.0.0.1" : "::1",
-      headless = true,
+      headed = false,
       objectMode = false,
       ...readableOptions
     } = options ?? {};
@@ -68,7 +68,7 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#port = port;
     this.#host = host;
     this.#type = type;
-    this.#headless = headless;
+    this.#headed = headed;
     this.#objectMode = objectMode;
     this.#handleSocketMessage = (data, head) => this.handleMessage(data, head);
   }
@@ -94,8 +94,8 @@ var UDPSocket = class extends import_node_stream.Readable {
   get port() {
     return this.origin.address().port;
   }
-  get headless() {
-    return this.#headless;
+  get headed() {
+    return this.#headed;
   }
   #addMessage(message) {
     if (this.#allowPush) {
@@ -148,7 +148,7 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#socket.off("message", this.#handleSocketMessage);
   }
   handleMessage(body, head) {
-    if (this.headless) {
+    if (!this.headed) {
       return this.#addMessage(body);
     }
     if (this.#objectMode) {
