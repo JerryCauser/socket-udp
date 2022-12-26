@@ -7,13 +7,11 @@ import { tryCountErrorHook, assertTry, checkResults } from './_main.js'
 
 /**
  * [x] send message and receive it correctly
- * [x] send big message and receive it correctly
- *
- * [x] send not all chunks. handle warning "missing"
- * [x] after all send one more message and everything is working
-
- * [x] test with encryption 'string'
- * [x] test with encryption 'function'
+ * [x] send 2 messages and receive it correctly
+ * [x] use [headless, objectMode] = [true, false] — everything works fine
+ * [x] use [headless, objectMode] = [true, true] — everything works fine
+ * [x] use [headless, objectMode] = [false, false] — everything works fine
+ * [x] use [headless, objectMode] = [false, true] — everything works fine
  */
 
 const TIMEOUT_SYMBOL = Symbol('timeout')
@@ -77,7 +75,7 @@ async function socketTest (UDPSocket) {
     return socket
   }
 
-  function checkMessage (caseAlias, message, results, payload) {
+  function checkOnlyMessage (caseAlias, message, results, payload) {
     assertTry(
       () =>
         assert.deepStrictEqual(
@@ -89,10 +87,25 @@ async function socketTest (UDPSocket) {
     )
   }
 
-  function checkMessageWithHead (caseAlias, message, results, payload) {
+  function checkMessageWithHead ({
+    caseAlias,
+    message,
+    results,
+    payload,
+    headless,
+    objectMode
+  }) {
+    if (headless) {
+      return checkOnlyMessage(caseAlias, message, results, payload)
+    }
+
+    if (!objectMode) {
+      message = UDPSocket.deserializeHead(message)
+    }
+
     const { body, size, family, address, port } = message
 
-    checkMessage(caseAlias, body, results, payload)
+    checkOnlyMessage(caseAlias, body, results, payload)
 
     assertTry(
       () =>
@@ -135,65 +148,21 @@ async function socketTest (UDPSocket) {
     )
   }
 
-  async function testSocket () {
-    const caseAlias = `${alias} sending messages basic usage ->`
-    const results = { fails: [] }
-
-    const client = await createUDPClient()
-    const socket = await createUDPSocket({ port: DEFAULT_PORT })
-    const payload = crypto.randomBytes(PACKET_SIZE)
-
-    client.send(payload, DEFAULT_PORT)
-
-    await delay(5)
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          socket.messages.length,
-          1,
-          `${caseAlias} 1 message should be received by socket`
-        ),
-      results
-    )
-
-    checkMessage(caseAlias, socket.messages[0], results, payload)
-
-    const payload2 = crypto.randomBytes(PACKET_SIZE)
-
-    client.send(payload2, DEFAULT_PORT)
-
-    await delay(5)
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          socket.messages.length,
-          2,
-          `${caseAlias} 2 messages should be received by socket`
-        ),
-      results
-    )
-
-    checkMessage(caseAlias, socket.messages[1], results, payload2)
-
-    await Promise.all([socket.stop(), client.stop()])
-
-    checkResults(results, caseAlias)
-  }
-
-  async function testSocketWithHead () {
-    const caseAlias = `${alias} sending messages headless=false ->`
+  async function testSocket (port, headless, objectMode) {
+    const caseAlias = `${alias} sending messages [headless, objectMode] = [${
+      headless ? 'true' : 'false'
+    }, ${objectMode ? 'true' : 'false'}] ->`
     const results = { fails: [] }
 
     const client = await createUDPClient()
     const socket = await createUDPSocket({
-      port: DEFAULT_PORT,
-      headless: false
+      port,
+      objectMode,
+      headless
     })
-    const payload = crypto.randomBytes(PACKET_SIZE)
+    const payload1 = crypto.randomBytes(PACKET_SIZE)
 
-    client.send(payload, DEFAULT_PORT)
+    client.send(payload1, port)
 
     await delay(5)
 
@@ -207,66 +176,18 @@ async function socketTest (UDPSocket) {
       results
     )
 
-    const message1 = UDPSocket.deserializeHead(socket.messages[0])
-
-    checkMessageWithHead(caseAlias, message1, results, payload)
-
-    const payload2 = crypto.randomBytes(PACKET_SIZE)
-
-    client.send(payload2, DEFAULT_PORT)
-
-    await delay(5)
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          socket.messages.length,
-          2,
-          `${caseAlias} 2 messages should be received by socket`
-        ),
-      results
-    )
-
-    const message2 = UDPSocket.deserializeHead(socket.messages[1])
-
-    checkMessageWithHead(caseAlias, message2, results, payload2)
-
-    await Promise.all([socket.stop(), client.stop()])
-
-    checkResults(results, caseAlias)
-  }
-
-  async function testSocketObjectModeWithMeta () {
-    const caseAlias = `${alias} sending messages on objectMode with headless=false ->`
-    const results = { fails: [] }
-
-    const client = await createUDPClient()
-    const socket = await createUDPSocket({
-      port: DEFAULT_PORT,
-      objectMode: true,
-      headless: false
+    checkMessageWithHead({
+      caseAlias,
+      message: socket.messages[0],
+      results,
+      payload: payload1,
+      headless,
+      objectMode
     })
-    const payload = crypto.randomBytes(PACKET_SIZE)
-
-    client.send(payload, DEFAULT_PORT)
-
-    await delay(5)
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          socket.messages.length,
-          1,
-          `${caseAlias} 1 message should be received by socket`
-        ),
-      results
-    )
-
-    checkMessageWithHead(caseAlias, socket.messages[0], results, payload)
 
     const payload2 = crypto.randomBytes(PACKET_SIZE)
 
-    client.send(payload2, DEFAULT_PORT)
+    client.send(payload2, port)
 
     await delay(5)
 
@@ -280,7 +201,14 @@ async function socketTest (UDPSocket) {
       results
     )
 
-    checkMessageWithHead(caseAlias, socket.messages[1], results, payload2)
+    checkMessageWithHead({
+      caseAlias,
+      message: socket.messages[1],
+      results,
+      payload: payload2,
+      headless,
+      objectMode
+    })
 
     await Promise.all([socket.stop(), client.stop()])
 
@@ -289,9 +217,10 @@ async function socketTest (UDPSocket) {
 
   const errors = tryCountErrorHook()
 
-  await errors.try(testSocket)
-  await errors.try(testSocketWithHead)
-  await errors.try(testSocketObjectModeWithMeta)
+  await errors.try(() => testSocket(DEFAULT_PORT, true, false))
+  await errors.try(() => testSocket(DEFAULT_PORT, true, true))
+  await errors.try(() => testSocket(DEFAULT_PORT, false, false))
+  await errors.try(() => testSocket(DEFAULT_PORT, false, true))
 
   if (errors.count === 0) {
     console.log('[socket.js] All test for passed\n')
