@@ -1,17 +1,9 @@
 import EventEmitter from 'node:events'
 import dgram from 'node:dgram'
-import { Buffer } from 'node:buffer'
 import { Readable } from 'node:stream'
 import { DEFAULT_PORT } from './constants.js'
 
-/**
- * @class UDPSocket
- * @param {UDPSocketOptions} [options={}]
- */
 class UDPSocket extends Readable {
-  /** @type {string} */
-  #host
-
   /** @type {number} */
   #port
 
@@ -25,24 +17,13 @@ class UDPSocket extends Readable {
   #socket
 
   /** @type {boolean} */
-  #objectMode = false
+  #allowPush = false
 
-  /** @type {boolean} */
-  #headed = false
+  /** @type {(data:Buffer, head:MessageHead) => boolean} */
+  #handleSocketMessage = (data, head) => this.handleMessage(data, head)
 
-  /** @type {boolean} */
-  #allowPush = true
-
-  /** @type {(string | Buffer | Uint8Array)[]} */
-  #messages = []
-
-  /** @type {function (data:Buffer, head:MessageHead):void} */
-  #handleSocketMessage
-
-  /** @type {function (object:Error):void} */
-  #handleSocketError = (error) => {
-    this.destroy(error)
-  }
+  /** @type {(object:Error) => this} */
+  #handleSocketError = (error) => this.destroy(error)
 
   /**
    * @param {UDPSocketOptions} [options]
@@ -50,23 +31,17 @@ class UDPSocket extends Readable {
   constructor (options) {
     const {
       type = 'udp4',
+      address = type === 'udp4' ? '127.0.0.1' : '::1',
       port = DEFAULT_PORT,
-      host = type === 'udp4' ? '127.0.0.1' : '::1',
-      headed = false,
-      objectMode = false,
+      objectMode = true,
       ...readableOptions
     } = options ?? {}
 
     super({ ...readableOptions, objectMode })
 
-    this.#port = port
-    this.#host = host
     this.#type = type
-
-    this.#headed = headed
-    this.#objectMode = objectMode
-
-    this.#handleSocketMessage = (data, head) => this.handleMessage(data, head)
+    this.#address = address
+    this.#port = port
   }
 
   _construct (callback) {
@@ -86,9 +61,7 @@ class UDPSocket extends Readable {
   }
 
   _read (size) {
-    this.#sendBufferedMessages()
-
-    this.#allowPush = this.#messages.length === 0
+    this.#allowPush = true
   }
 
   get origin () {
@@ -103,30 +76,8 @@ class UDPSocket extends Readable {
     return this.origin.address().port
   }
 
-  get headed () {
-    return this.#headed
-  }
-
-  /**
-   * @param {*} message
-   */
-  #addMessage (message) {
-    if (this.#allowPush) {
-      this.#allowPush = this.push(message)
-    } else {
-      this.#messages.push(message)
-    }
-  }
-
-  #sendBufferedMessages () {
-    if (this.#messages.length === 0) return
-
-    for (let i = 0; i < this.#messages.length; ++i) {
-      if (!this.push(this.#messages[i])) {
-        this.#messages.splice(0, i + 1)
-        break
-      }
-    }
+  get allowPush () {
+    return this.#allowPush
   }
 
   async #start () {
@@ -150,7 +101,7 @@ class UDPSocket extends Readable {
 
   async #initSocket () {
     this.#socket = dgram.createSocket({ type: this.#type })
-    this.#socket.bind(this.#port, this.#host)
+    this.#socket.bind(this.#port, this.#address)
 
     const error = await Promise.race([
       EventEmitter.once(this.#socket, 'listening'),
@@ -174,54 +125,15 @@ class UDPSocket extends Readable {
 
   /**
    * @param {Buffer|any} body any in ObjectMode, otherwise should be Buffer
-   * @param {MessageHead} head
+   * @param {MessageHead} [head]
+   * @returns {boolean} allowPush
    */
   handleMessage (body, head) {
-    if (!this.headed) {
-      return this.#addMessage(body)
+    if (this.#allowPush) {
+      this.#allowPush = this.push(body)
     }
 
-    if (this.#objectMode) {
-      head.body = body
-
-      return this.#addMessage(head)
-    } else {
-      return this.#addMessage(
-        Buffer.concat([UDPSocket.serializeHead(head), body])
-      )
-    }
-  }
-
-  /**
-   * @param {MessageHead} head
-   * @returns {Buffer}
-   */
-  static serializeHead (head) {
-    const buffer = Buffer.alloc(5 + (head.address?.length || 0))
-
-    buffer.writeUintBE(head.size, 0, 2)
-    buffer[2] = head.family === 'IPv4' ? 0x04 : 0x06
-    buffer.writeUintBE(head.port, 3, 2)
-    buffer.set(Buffer.from(head.address, 'utf8'), 5)
-
-    return buffer
-  }
-
-  /**
-   * Useful when headed=true and objectMode=false
-   * @param {Buffer} payload
-   * @returns {MessageHead}
-   */
-  static deserializeHead (payload) {
-    const size = payload.readUintBE(0, 2)
-
-    return {
-      size,
-      family: payload[2] === 0x06 ? 'IPv6' : 'IPv4',
-      port: payload.readUintBE(3, 2),
-      address: payload.subarray(5, payload.length - size).toString('utf8'),
-      body: payload.subarray(payload.length - size)
-    }
+    return this.#allowPush
   }
 }
 

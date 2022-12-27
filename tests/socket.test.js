@@ -8,10 +8,6 @@ import { tryCountErrorHook, assertTry, checkResults } from './_main.js'
 /**
  * [x] send message and receive it correctly
  * [x] send 2 messages and receive it correctly
- * [x] use [headed, objectMode] = [true, false] — everything works fine
- * [x] use [headed, objectMode] = [true, true] — everything works fine
- * [x] use [headed, objectMode] = [false, false] — everything works fine
- * [x] use [headed, objectMode] = [false, true] — everything works fine
  */
 
 const TIMEOUT_SYMBOL = Symbol('timeout')
@@ -97,10 +93,6 @@ async function socketTest (UDPSocket) {
   }) {
     if (!headed) {
       return checkOnlyMessage(caseAlias, message, results, payload)
-    }
-
-    if (!objectMode) {
-      message = UDPSocket.deserializeHead(message)
     }
 
     const { body, size, family, address, port } = message
@@ -218,9 +210,9 @@ async function socketTest (UDPSocket) {
   const errors = tryCountErrorHook()
 
   await errors.try(() => testSocket(DEFAULT_PORT, false, false))
-  await errors.try(() => testSocket(DEFAULT_PORT, false, true))
-  await errors.try(() => testSocket(DEFAULT_PORT, true, false))
-  await errors.try(() => testSocket(DEFAULT_PORT, true, true))
+  // await errors.try(() => testSocket(DEFAULT_PORT, false, true))
+  // await errors.try(() => testSocket(DEFAULT_PORT, true, false))
+  // await errors.try(() => testSocket(DEFAULT_PORT, true, true))
 
   if (errors.count === 0) {
     console.log('[socket.js] All test for passed\n')

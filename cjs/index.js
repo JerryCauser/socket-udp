@@ -34,7 +34,6 @@ module.exports = __toCommonJS(udp_socket_exports);
 // src/socket.js
 var import_node_events = __toESM(require("node:events"), 1);
 var import_node_dgram = __toESM(require("node:dgram"), 1);
-var import_node_buffer = require("node:buffer");
 var import_node_stream = require("node:stream");
 
 // src/constants.js
@@ -42,35 +41,25 @@ var DEFAULT_PORT = 44002;
 
 // src/socket.js
 var UDPSocket = class extends import_node_stream.Readable {
-  #host;
   #port;
   #address;
   #type;
   #socket;
-  #objectMode = false;
-  #headed = false;
-  #allowPush = true;
-  #messages = [];
-  #handleSocketMessage;
-  #handleSocketError = (error) => {
-    this.destroy(error);
-  };
+  #allowPush = false;
+  #handleSocketMessage = (data, head) => this.handleMessage(data, head);
+  #handleSocketError = (error) => this.destroy(error);
   constructor(options) {
     const {
       type = "udp4",
+      address = type === "udp4" ? "127.0.0.1" : "::1",
       port = DEFAULT_PORT,
-      host = type === "udp4" ? "127.0.0.1" : "::1",
-      headed = false,
-      objectMode = false,
+      objectMode = true,
       ...readableOptions
     } = options ?? {};
     super({ ...readableOptions, objectMode });
-    this.#port = port;
-    this.#host = host;
     this.#type = type;
-    this.#headed = headed;
-    this.#objectMode = objectMode;
-    this.#handleSocketMessage = (data, head) => this.handleMessage(data, head);
+    this.#address = address;
+    this.#port = port;
   }
   _construct(callback) {
     this.#start().then(() => callback(null)).catch(callback);
@@ -82,8 +71,7 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#stop().then(() => callback(error)).catch(callback);
   }
   _read(size) {
-    this.#sendBufferedMessages();
-    this.#allowPush = this.#messages.length === 0;
+    this.#allowPush = true;
   }
   get origin() {
     return this.#socket;
@@ -94,25 +82,8 @@ var UDPSocket = class extends import_node_stream.Readable {
   get port() {
     return this.origin.address().port;
   }
-  get headed() {
-    return this.#headed;
-  }
-  #addMessage(message) {
-    if (this.#allowPush) {
-      this.#allowPush = this.push(message);
-    } else {
-      this.#messages.push(message);
-    }
-  }
-  #sendBufferedMessages() {
-    if (this.#messages.length === 0)
-      return;
-    for (let i = 0; i < this.#messages.length; ++i) {
-      if (!this.push(this.#messages[i])) {
-        this.#messages.splice(0, i + 1);
-        break;
-      }
-    }
+  get allowPush() {
+    return this.#allowPush;
   }
   async #start() {
     await this.#initSocket();
@@ -130,7 +101,7 @@ var UDPSocket = class extends import_node_stream.Readable {
   }
   async #initSocket() {
     this.#socket = import_node_dgram.default.createSocket({ type: this.#type });
-    this.#socket.bind(this.#port, this.#host);
+    this.#socket.bind(this.#port, this.#address);
     const error = await Promise.race([
       import_node_events.default.once(this.#socket, "listening"),
       import_node_events.default.once(this.#socket, "error")
@@ -148,36 +119,10 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#socket.off("message", this.#handleSocketMessage);
   }
   handleMessage(body, head) {
-    if (!this.headed) {
-      return this.#addMessage(body);
+    if (this.#allowPush) {
+      this.#allowPush = this.push(body);
     }
-    if (this.#objectMode) {
-      head.body = body;
-      return this.#addMessage(head);
-    } else {
-      return this.#addMessage(
-        import_node_buffer.Buffer.concat([UDPSocket.serializeHead(head), body])
-      );
-    }
-  }
-  static serializeHead(head) {
-    var _a;
-    const buffer = import_node_buffer.Buffer.alloc(5 + (((_a = head.address) == null ? void 0 : _a.length) || 0));
-    buffer.writeUintBE(head.size, 0, 2);
-    buffer[2] = head.family === "IPv4" ? 4 : 6;
-    buffer.writeUintBE(head.port, 3, 2);
-    buffer.set(import_node_buffer.Buffer.from(head.address, "utf8"), 5);
-    return buffer;
-  }
-  static deserializeHead(payload) {
-    const size = payload.readUintBE(0, 2);
-    return {
-      size,
-      family: payload[2] === 6 ? "IPv6" : "IPv4",
-      port: payload.readUintBE(3, 2),
-      address: payload.subarray(5, payload.length - size).toString("utf8"),
-      body: payload.subarray(payload.length - size)
-    };
+    return this.#allowPush;
   }
 };
 var socket_default = UDPSocket;

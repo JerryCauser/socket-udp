@@ -14,27 +14,15 @@ export type UDPSocketOptions = {
     type?: dgram.SocketType
     port?: number
     host?: string
-    /**
-     * makes this stream to work in object mode with autoparse
-     */
-    objectMode?: boolean
-    /**
-     * makes this stream to pass payload with or without meta info like ipaddress, port, etc.
-     * useful when you want to stream video or filedata right into file
-     */
-    headed?: boolean
 } | undefined
 
 export class UDPSocket extends Readable {
-    static serializeHead (head: MessageHead): Buffer
-    static deserializeHead (payload: Buffer): MessageHead
-
     constructor (options?: UDPSocketOptions)
     get origin (): dgram.Socket
     get address (): string
     get port (): number
-    get headed (): boolean
-    handleMessage (body: Buffer | any, head: MessageHead): void
+    get allowPush (): boolean
+    handleMessage (body: Buffer | any, head?: MessageHead | undefined): boolean
 }
 
 export type UDPClientOptions = {

@@ -1,29 +1,29 @@
-# UDP Socket 
-[![npm](https://img.shields.io/npm/v/udp-socket)](https://www.npmjs.com/package/udp-socket)
-[![tests](https://github.com/JerryCauser/udp-socket/actions/workflows/tests.yml/badge.svg)](https://github.com/JerryCauser/udp-socket/actions/workflows/tests.yml)
-[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/JerryCauser/udp-socket/master)](https://www.codefactor.io/repository/github/jerrycauser/udp-socket)
+# UDP Socket
+[![npm](https://img.shields.io/npm/v/socket-udp)](https://www.npmjs.com/package/socket-udp)
+[![tests](https://github.com/JerryCauser/socket-udp/actions/workflows/tests.yml/badge.svg)](https://github.com/JerryCauser/socket-udp/actions/workflows/tests.yml)
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/JerryCauser/socket-udp/master)](https://www.codefactor.io/repository/github/jerrycauser/socket-udp)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
-[![GitHub](https://img.shields.io/github/license/JerryCauser/udp-socket)](https://github.com/JerryCauser/udp-socket/blob/master/LICENSE)
+[![node-current](https://img.shields.io/node/v/socket-udp)](https://nodejs.org)
+[![GitHub](https://img.shields.io/github/license/JerryCauser/socket-udp)](https://github.com/JerryCauser/socket-udp/blob/master/LICENSE)
 
 Plain UDP Socket and Client
 
 - Fast — little overhead above UDP to send messages
 - Simple — used well-known Node streams to manipulate and move data
 - Zero-dependency
-- Supports both: objectMode and raw data mode
 - ESM and CJS
 
 ## Install
 
 ```bash
-npm i --save udp-socket
+npm i --save socket-udp
 ```
 
 ## Fast Start
 
 ```javascript
 //app.js
-import { UDPClient } from 'udp-socket'
+import { UDPClient } from 'socket-udp'
 
 const client = new UDPClient({ port: 44002 })
 
@@ -32,7 +32,7 @@ client.send(Buffer.from('Hello, World!', 'utf8'))
 
 ```javascript
 //server.js
-import { UDPSocket } from 'udp-socket'
+import { UDPSocket } from 'socket-udp'
 
 const socket = new UDPSocket({ port: 44002 })
 
@@ -65,7 +65,7 @@ Emitted when the client "establishes" udp connection.
 #### Usage
 ##### Simple example
 ```javascript
-import { UDPClient } from 'udp-socket'
+import { UDPClient } from 'socket-udp'
 
 const client = new UDPClient({ port: 44002 })
 
@@ -115,7 +115,7 @@ Emitted right after a message was received [and processed in `headed` and/or `ob
 ##### Example how to use socket as stream
 ```javascript
 import fs from 'node:fs'
-import { UDPSocket } from 'udp-socket'
+import { UDPSocket } from 'socket-udp'
 
 const socket = new UDPsocket()
 const writer = fs.createWriteStream('/some/path')
@@ -125,7 +125,7 @@ socket.pipe(writer)
 
 ##### Example how to use pure socket as async generator
 ```javascript
-import { UDPSocket } from 'udp-socket'
+import { UDPSocket } from 'socket-udp'
 
 const socket = new UDPsocket({
   port: 44002,
@@ -143,7 +143,7 @@ for await (const req of socket) {
 
 ##### Example where we use `UDPSocket.deserializeHead`
 ```javascript
-import { UDPSocket } from 'udp-socket'
+import { UDPSocket } from 'socket-udp'
 
 const socket = new UDPsocket({
   port: 44002,

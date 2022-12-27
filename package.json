@@ -1,5 +1,5 @@
 {
-  "name": "udp-socket",
+  "name": "socket-udp",
   "version": "0.1.0",
   "description": "Basic UDP Socket and Client",
   "main": "cjs/index.js",
@@ -37,7 +37,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JerryCauser/udp-socket.git"
+    "url": "git+https://github.com/JerryCauser/socket-udp.git"
   },
   "keywords": [
     "udp socket",
@@ -51,11 +51,11 @@
   "type": "module",
   "author": "Artem Abzanov",
   "bugs": {
-    "url": "https://github.com/JerryCauser/udp-socket/issues"
+    "url": "https://github.com/JerryCauser/socket-udp/issues"
   },
-  "homepage": "https://github.com/JerryCauser/udp-socket#readme",
+  "homepage": "https://github.com/JerryCauser/socket-udp#readme",
   "devDependencies": {
-    "@types/node": "^18.11.17",
+    "@types/node": "^18.11.18",
     "esbuild": "^0.16.10",
     "husky": "^8.0.2",
     "prettier": "^2.8.1",
