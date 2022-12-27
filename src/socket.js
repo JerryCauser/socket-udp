@@ -76,6 +76,10 @@ class UDPSocket extends Readable {
     return this.origin.address().port
   }
 
+  get family () {
+    return this.origin.address().family
+  }
+
   get allowPush () {
     return this.#allowPush
   }
@@ -83,9 +87,6 @@ class UDPSocket extends Readable {
   async #start () {
     await this.#initSocket()
     this.#attachHandlers()
-
-    this.#address = this.#socket.address().address
-    this.#port = this.#socket.address().port
 
     this.emit('ready')
   }

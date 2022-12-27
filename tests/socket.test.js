@@ -1,4 +1,3 @@
-import net from 'node:net'
 import dgram from 'node:dgram'
 import assert from 'node:assert'
 import crypto from 'node:crypto'
@@ -71,7 +70,7 @@ async function socketTest (UDPSocket) {
     return socket
   }
 
-  function checkOnlyMessage (caseAlias, message, results, payload) {
+  function checkOnlyMessage ({ caseAlias, message, results, payload }) {
     assertTry(
       () =>
         assert.deepStrictEqual(
@@ -83,75 +82,12 @@ async function socketTest (UDPSocket) {
     )
   }
 
-  function checkMessageWithHead ({
-    caseAlias,
-    message,
-    results,
-    payload,
-    headed,
-    objectMode
-  }) {
-    if (!headed) {
-      return checkOnlyMessage(caseAlias, message, results, payload)
-    }
-
-    const { body, size, family, address, port } = message
-
-    checkOnlyMessage(caseAlias, body, results, payload)
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          size,
-          payload.length,
-          `${caseAlias} head.size should be the same as sent one's size`
-        ),
-      results
-    )
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          family === 'IPv4' || family === 'IPv6',
-          true,
-          `${caseAlias} head.family should be 'IPv4' or 'IPv6'`
-        ),
-      results
-    )
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          net.isIP(address) !== 0,
-          true,
-          `${caseAlias} head.address is not valid`
-        ),
-      results
-    )
-
-    assertTry(
-      () =>
-        assert.strictEqual(
-          port >= 0 && port <= 65535,
-          true,
-          `${caseAlias} head.port is not valid`
-        ),
-      results
-    )
-  }
-
-  async function testSocket (port, headed, objectMode) {
-    const caseAlias = `${alias} sending messages [headed, objectMode] = [${
-      headed ? 'true' : 'false'
-    }, ${objectMode ? 'true' : 'false'}] ->`
+  async function testSocket (port) {
+    const caseAlias = `${alias} sending messages ->`
     const results = { fails: [] }
 
     const client = await createUDPClient()
-    const socket = await createUDPSocket({
-      port,
-      objectMode,
-      headed
-    })
+    const socket = await createUDPSocket({ port })
     const payload1 = crypto.randomBytes(PACKET_SIZE)
 
     client.send(payload1, port)
@@ -168,13 +104,11 @@ async function socketTest (UDPSocket) {
       results
     )
 
-    checkMessageWithHead({
+    checkOnlyMessage({
       caseAlias,
       message: socket.messages[0],
       results,
-      payload: payload1,
-      headed,
-      objectMode
+      payload: payload1
     })
 
     const payload2 = crypto.randomBytes(PACKET_SIZE)
@@ -193,13 +127,11 @@ async function socketTest (UDPSocket) {
       results
     )
 
-    checkMessageWithHead({
+    checkOnlyMessage({
       caseAlias,
       message: socket.messages[1],
       results,
-      payload: payload2,
-      headed,
-      objectMode
+      payload: payload2
     })
 
     await Promise.all([socket.stop(), client.stop()])
@@ -209,10 +141,7 @@ async function socketTest (UDPSocket) {
 
   const errors = tryCountErrorHook()
 
-  await errors.try(() => testSocket(DEFAULT_PORT, false, false))
-  // await errors.try(() => testSocket(DEFAULT_PORT, false, true))
-  // await errors.try(() => testSocket(DEFAULT_PORT, true, false))
-  // await errors.try(() => testSocket(DEFAULT_PORT, true, true))
+  await errors.try(() => testSocket(DEFAULT_PORT))
 
   if (errors.count === 0) {
     console.log('[socket.js] All test for passed\n')

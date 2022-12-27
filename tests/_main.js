@@ -1,5 +1,6 @@
 import clientTest from './client.test.js'
 import socketTest from './socket.test.js'
+import synergyTest from './synergy.test.js'
 
 /**
  * sequence:
@@ -13,6 +14,7 @@ export default async function _main (type, { UDPClient, UDPSocket }) {
 
   errorsCount += await clientTest(UDPClient)
   errorsCount += await socketTest(UDPSocket)
+  errorsCount += await synergyTest(UDPSocket, UDPClient)
 
   if (errorsCount === 0) console.log('All tests passed')
   else {
