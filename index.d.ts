@@ -1,7 +1,6 @@
 /// <reference types="node" />
-import type { EventEmitter } from 'node:events'
 import type { Buffer } from 'node:buffer'
-import type { Readable } from 'node:stream'
+import type { Readable, Writable, ReadableOptions, WritableOptions} from 'node:stream'
 import type * as dgram from  'node:dgram'
 
 export const DEFAULT_PORT: number
@@ -10,10 +9,10 @@ export interface MessageHead extends dgram.RemoteInfo {
     body?: Buffer
 }
 
-export type UDPSocketOptions = {
+export type UDPSocketOptions = ReadableOptions & {
     type?: dgram.SocketType
     port?: number
-    host?: string
+    address?: string
 } | undefined
 
 export class UDPSocket extends Readable {
@@ -21,17 +20,21 @@ export class UDPSocket extends Readable {
     get origin (): dgram.Socket
     get address (): string
     get port (): number
+    get family (): string
     get allowPush (): boolean
     handleMessage (body: Buffer | any, head?: MessageHead | undefined): boolean
 }
 
-export type UDPClientOptions = {
+export type UDPClientOptions = WritableOptions & {
     type?: dgram.SocketType
     port?: number
-    host?: string
+    address?: string
 } | undefined
 
-export class UDPClient extends EventEmitter {
+export class UDPClient extends Writable {
     constructor (options?: UDPClientOptions)
-    send (buffer: Buffer): void
+    get origin (): dgram.Socket
+    get address (): string
+    get port (): number
+    get family (): string
 }

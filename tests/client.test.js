@@ -49,7 +49,7 @@ async function clientTest (UDPClient) {
 
     await once(client, 'ready')
 
-    client.send(payload)
+    client.write(payload)
 
     await delay(5)
 
@@ -67,7 +67,7 @@ async function clientTest (UDPClient) {
 
     const payload2 = crypto.randomBytes(300)
 
-    client.send(payload2)
+    client.write(payload2)
 
     await delay(5)
 

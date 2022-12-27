@@ -82,14 +82,15 @@ var UDPSocket = class extends import_node_stream.Readable {
   get port() {
     return this.origin.address().port;
   }
+  get family() {
+    return this.origin.address().family;
+  }
   get allowPush() {
     return this.#allowPush;
   }
   async #start() {
     await this.#initSocket();
     this.#attachHandlers();
-    this.#address = this.#socket.address().address;
-    this.#port = this.#socket.address().port;
     this.emit("ready");
   }
   async #stop() {
@@ -129,32 +130,64 @@ var socket_default = UDPSocket;
 
 // src/client.js
 var import_node_dgram2 = __toESM(require("node:dgram"), 1);
-var import_node_events2 = require("node:events");
-var UDPClient = class extends import_node_events2.EventEmitter {
+var import_node_stream2 = require("node:stream");
+var import_node_events2 = __toESM(require("node:events"), 1);
+var UDPClient = class extends import_node_stream2.Writable {
   #port;
-  #host;
+  #address;
   #type;
-  #connecting;
   #socket;
   constructor(options) {
     const {
       type = "udp4",
       port = 44002,
-      host = type === "udp4" ? "127.0.0.1" : "::1",
-      ...eventEmitterOptions
+      address = type === "udp4" ? "127.0.0.1" : "::1",
+      objectMode = true,
+      ...readableOptions
     } = options ?? {};
-    super(eventEmitterOptions);
+    super({ ...readableOptions, objectMode });
     this.#port = port;
-    this.#host = host;
+    this.#address = address;
     this.#type = type;
-    this.#socket = import_node_dgram2.default.createSocket(this.#type);
-    this.#connecting = (0, import_node_events2.once)(this.#socket, "connect");
-    this.#socket.connect(this.#port, this.#host, () => {
-      this.emit("ready");
-    });
   }
-  send(buffer) {
-    this.#socket.send(buffer);
+  _construct(callback) {
+    this.#start().then(() => callback(null)).catch(callback);
+  }
+  _write(chunk, encoding, callback) {
+    this.#send(chunk, callback);
+  }
+  _destroy(error, callback) {
+    if (error) {
+      this.emit("error", error);
+    }
+    this.#stop().then(() => callback(error)).catch(callback);
+  }
+  async #start() {
+    this.#socket = import_node_dgram2.default.createSocket(this.#type);
+    this.#socket.connect(this.#port, this.#address);
+    await import_node_events2.default.once(this.#socket, "connect");
+    this.emit("ready");
+  }
+  async #stop() {
+    if (!this.#socket)
+      return;
+    this.#socket.close();
+    await import_node_events2.default.once(this.#socket, "close");
+  }
+  get origin() {
+    return this.#socket;
+  }
+  get address() {
+    return this.origin.address().address;
+  }
+  get port() {
+    return this.origin.address().port;
+  }
+  get family() {
+    return this.origin.address().family;
+  }
+  #send(buffer, callback) {
+    this.#socket.send(buffer, callback);
   }
 };
 var client_default = UDPClient;
