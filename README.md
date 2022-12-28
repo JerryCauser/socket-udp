@@ -1,6 +1,7 @@
 # UDP Socket
 [![npm](https://img.shields.io/npm/v/socket-udp)](https://www.npmjs.com/package/socket-udp)
 [![tests](https://github.com/JerryCauser/socket-udp/actions/workflows/tests.yml/badge.svg)](https://github.com/JerryCauser/socket-udp/actions/workflows/tests.yml)
+[![CodeQL](https://github.com/JerryCauser/socket-udp/actions/workflows/codeql.yml/badge.svg)](https://github.com/JerryCauser/socket-udp/actions/workflows/codeql.yml)
 [![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/JerryCauser/socket-udp/master)](https://www.codefactor.io/repository/github/jerrycauser/socket-udp)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![node-current](https://img.shields.io/node/v/socket-udp)](https://nodejs.org)
