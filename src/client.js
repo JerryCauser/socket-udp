@@ -3,7 +3,7 @@ import { Writable } from 'node:stream'
 import EventEmitter from 'node:events'
 
 /**
- * @param {UDPClientOptions} [options={}]
+ * @param {UDPClientOptions} [options]
  * @constructor
  */
 class UDPClient extends Writable {
@@ -80,15 +80,15 @@ class UDPClient extends Writable {
   }
 
   get address () {
-    return this.origin.address().address
+    return this.#socket.address().address
   }
 
   get port () {
-    return this.origin.address().port
+    return this.#socket.address().port
   }
 
   get family () {
-    return this.origin.address().family
+    return this.#socket.address().family
   }
 
   /**
@@ -101,4 +101,5 @@ class UDPClient extends Writable {
   }
 }
 
+/** @type {UDPClient} */
 export default UDPClient

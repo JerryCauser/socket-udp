@@ -23,13 +23,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // index.js
-var udp_socket_exports = {};
-__export(udp_socket_exports, {
+var socket_udp_exports = {};
+__export(socket_udp_exports, {
   DEFAULT_PORT: () => DEFAULT_PORT,
   UDPClient: () => client_default,
   UDPSocket: () => socket_default
 });
-module.exports = __toCommonJS(udp_socket_exports);
+module.exports = __toCommonJS(socket_udp_exports);
 
 // src/socket.js
 var import_node_events = __toESM(require("node:events"), 1);
@@ -178,13 +178,13 @@ var UDPClient = class extends import_node_stream2.Writable {
     return this.#socket;
   }
   get address() {
-    return this.origin.address().address;
+    return this.#socket.address().address;
   }
   get port() {
-    return this.origin.address().port;
+    return this.#socket.address().port;
   }
   get family() {
-    return this.origin.address().family;
+    return this.#socket.address().family;
   }
   #send(buffer, callback) {
     this.#socket.send(buffer, callback);
