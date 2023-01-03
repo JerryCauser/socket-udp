@@ -91,6 +91,62 @@ async function socketTest (UDPSocket) {
   }) {
     const { body, size, family, address, port } = message
 
+    checkOnlyMessage({
+      caseAlias,
+      message: body,
+      results,
+      payload
+    })
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          size,
+          payload.length,
+          `${caseAlias} head.size should be the same as sent one's size`
+        ),
+      results
+    )
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          family === 'IPv4' || family === 'IPv6',
+          true,
+          `${caseAlias} head.family should be 'IPv4' or 'IPv6'`
+        ),
+      results
+    )
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          net.isIP(address) !== 0,
+          true,
+          `${caseAlias} head.address is not valid`
+        ),
+      results
+    )
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          port >= 0 && port <= 65535,
+          true,
+          `${caseAlias} head.port is not valid`
+        ),
+      results
+    )
+  }
+
+  function checkMessageWithHead ({
+    caseAlias,
+    message,
+    results,
+    payload
+  }) {
+    const { body, size, family, address, port } = message
+
     checkOnlyMessage(caseAlias, body, results, payload)
 
     assertTry(
@@ -180,6 +236,63 @@ async function socketTest (UDPSocket) {
     )
 
     checkOnlyMessage({
+      caseAlias,
+      message: socket.messages[1],
+      results,
+      payload: payload2
+    })
+
+    await Promise.all([socket.stop(), client.stop()])
+
+    checkResults(results, caseAlias)
+  }
+
+  async function testSocketPushHead (port) {
+    const caseAlias = `${alias} sending messages with pushMeta=true ->`
+    const results = { fails: [] }
+
+    const client = await createUDPClient()
+    const socket = await createUDPSocket({ port, pushMeta: true })
+    const payload1 = crypto.randomBytes(PACKET_SIZE)
+
+    client.send(payload1, port)
+
+    await delay(5)
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          socket.messages.length,
+          1,
+          `${caseAlias} 1 message should be received by socket`
+        ),
+      results
+    )
+
+    checkMessageWithHead({
+      caseAlias,
+      message: socket.messages[0],
+      results,
+      payload: payload1
+    })
+
+    const payload2 = crypto.randomBytes(PACKET_SIZE)
+
+    client.send(payload2, port)
+
+    await delay(5)
+
+    assertTry(
+      () =>
+        assert.strictEqual(
+          socket.messages.length,
+          2,
+          `${caseAlias} 2 messages should be received by socket`
+        ),
+      results
+    )
+
+    checkMessageWithHead({
       caseAlias,
       message: socket.messages[1],
       results,
