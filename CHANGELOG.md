@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/JerryCauser/socket-udp/compare/v0.3.0...v0.4.0) (2023-01-03)
+
+
+### Features
+
+* add pushMetaMode which provide possibility to get remoteInfo from messages ([da76f60](https://github.com/JerryCauser/socket-udp/commit/da76f60b68fe2d692a3cceb9b640a8935842b2d0))
+* add pushMetaMode which provide possibility to get remoteInfo from messages ([88a6f7e](https://github.com/JerryCauser/socket-udp/commit/88a6f7e6079470ed1caf6414ee4d8a15de4f8ba7))
+
 ## [0.3.0](https://github.com/JerryCauser/socket-udp/compare/v0.2.0...v0.3.0) (2022-12-27)
 
 ## 0.2.0 (2022-12-27)
