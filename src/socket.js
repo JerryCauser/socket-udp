@@ -19,6 +19,9 @@ class UDPSocket extends Readable {
   /** @type {boolean} */
   #allowPush = false
 
+  /** @type {boolean} */
+  #pushMeta = false
+
   /** @type {(data:Buffer, head:MessageHead) => boolean} */
   #handleSocketMessage = (data, head) => this.handleMessage(data, head)
 
@@ -34,6 +37,7 @@ class UDPSocket extends Readable {
       address = type === 'udp4' ? '127.0.0.1' : '::1',
       port = DEFAULT_PORT,
       objectMode = true,
+      pushMeta = false,
       ...readableOptions
     } = options ?? {}
 
@@ -42,6 +46,7 @@ class UDPSocket extends Readable {
     this.#type = type
     this.#address = address
     this.#port = port
+    this.#pushMeta = pushMeta === true
   }
 
   _construct (callback) {
@@ -82,6 +87,10 @@ class UDPSocket extends Readable {
 
   get allowPush () {
     return this.#allowPush
+  }
+
+  get pushMetaMode () {
+    return this.#pushMeta
   }
 
   async #start () {
@@ -131,7 +140,13 @@ class UDPSocket extends Readable {
    */
   handleMessage (body, head) {
     if (this.#allowPush) {
-      this.#allowPush = this.push(body)
+      if (this.#pushMeta) {
+        head.body = body
+
+        this.#allowPush = this.push(head)
+      } else {
+        this.#allowPush = this.push(body)
+      }
     }
 
     return this.#allowPush

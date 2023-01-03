@@ -46,6 +46,7 @@ var UDPSocket = class extends import_node_stream.Readable {
   #type;
   #socket;
   #allowPush = false;
+  #pushMeta = false;
   #handleSocketMessage = (data, head) => this.handleMessage(data, head);
   #handleSocketError = (error) => this.destroy(error);
   constructor(options) {
@@ -54,12 +55,14 @@ var UDPSocket = class extends import_node_stream.Readable {
       address = type === "udp4" ? "127.0.0.1" : "::1",
       port = DEFAULT_PORT,
       objectMode = true,
+      pushMeta = false,
       ...readableOptions
     } = options ?? {};
     super({ ...readableOptions, objectMode });
     this.#type = type;
     this.#address = address;
     this.#port = port;
+    this.#pushMeta = pushMeta === true;
   }
   _construct(callback) {
     this.#start().then(() => callback(null)).catch(callback);
@@ -87,6 +90,9 @@ var UDPSocket = class extends import_node_stream.Readable {
   }
   get allowPush() {
     return this.#allowPush;
+  }
+  get pushMetaMode() {
+    return this.#pushMeta;
   }
   async #start() {
     await this.#initSocket();
@@ -121,7 +127,12 @@ var UDPSocket = class extends import_node_stream.Readable {
   }
   handleMessage(body, head) {
     if (this.#allowPush) {
-      this.#allowPush = this.push(body);
+      if (this.#pushMeta) {
+        head.body = body;
+        this.#allowPush = this.push(head);
+      } else {
+        this.#allowPush = this.push(body);
+      }
     }
     return this.#allowPush;
   }

@@ -12,16 +12,19 @@ export interface MessageHead extends dgram.RemoteInfo {
 export type UDPSocketOptions = ReadableOptions & {
     type?: dgram.SocketType
     port?: number
-    address?: string
+    address?: string,
+    pushMeta?: boolean
 } | undefined
 
 export class UDPSocket extends Readable {
     constructor (options?: UDPSocketOptions)
+    push (chunk: Buffer | MessageHead | any, encoding: BufferEncoding): boolean
     get origin (): dgram.Socket
     get address (): string
     get port (): number
     get family (): string
     get allowPush (): boolean
+    get pushMetaMode (): boolean
     handleMessage (body: Buffer | any, head?: MessageHead | undefined): boolean
 }
 
