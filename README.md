@@ -86,7 +86,8 @@ It is a UDP socket in `readable stream` form.
 - `options` `<object>` – **required**
   - `type` `<'udp4' | 'udp6'>` – optional. **Default** `'udp4'`
   - `port` `<string | number>` – optional. **Default** `44002`
-  - `address` `<string>` – optional **Default** `'127.0.0.1'` or `'::1'`
+  - `address` `<string>` – optional. **Default** `'127.0.0.1'` or `'::1'`
+  - `pushMeta` `<boolean>` – optional. Will push not a raw message, but an object with removeInfo. Message data will be placed in field `body`. **Default** `false`
 
 #### Fields:
 - `origin`: [`<dgram.Socket>`][node-dgram-socket]
@@ -122,14 +123,14 @@ const writer = fs.createWriteStream('/some/path')
 socket.pipe(writer)
 ```
 
-##### Example how to use plain socket as async generator
+##### Example how to use plain socket as async generator + pushMeta example
 ```javascript
 import { UDPSocket } from 'socket-udp'
 
-const socket = new UDPSocket({ port: 44002 })
+const socket = new UDPSocket({ port: 44002, pushMeta: true })
 
-for await (const message of socket) {
-  console.log(JSON.parse(message.toString('utf8')))
+for await (const { address, port, body } of socket) {
+  console.log(`From ${address}:${port} you recieved`, JSON.parse(body.toString('utf8')))
 }
 ```
 
