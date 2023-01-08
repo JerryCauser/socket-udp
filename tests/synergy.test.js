@@ -23,30 +23,30 @@ async function socketTest (UDPSocket, UDPClient) {
   const alias = '  synergy.js: '
 
   const DEFAULT_PORT = 45007
-  const PACKET_SIZE = 300
 
   const createReader = ({ data, fast }) => {
     const reader = new Readable({
       read (size) {
-        reader.readyToRead = true
+        reader.emit('readyToRead')
       }
     })
 
-    const interval = fast ? 1 : 10
+    reader.readyToRead = false
+
+    const interval = fast
+      ? Math.min(508, data.length / 300)
+      : Math.min(508, data.length / 30)
 
     reader.startReading = async () => {
-      while (true) {
-        if (reader.readyToRead === true) break
-        await delay(5)
-      }
-
       for (let i = 0; i < data.length; i += interval) {
-        reader.push(data.subarray(i, i + interval))
+        if (reader.push(data.subarray(i, i + interval))) {
+          await once(reader, 'readyToRead')
+        }
 
-        await delay(interval)
+        if (!fast) await delay(10)
       }
 
-      await delay(5)
+      await delay(50)
     }
 
     return reader
@@ -75,10 +75,12 @@ async function socketTest (UDPSocket, UDPClient) {
         ),
       results
     )
+
+    console.log({ message: message.length, payload: payload.length })
   }
 
-  async function testSynergy (port) {
-    const caseAlias = `${alias} sending messages ->`
+  async function testSynergy (port, fast, payloadSize) {
+    const caseAlias = `${alias} sending messages fast=${fast ? 1 : 0}, payloadSize=${payloadSize} ->`
     const results = { fails: [] }
 
     const writer = createWriter()
@@ -87,36 +89,19 @@ async function socketTest (UDPSocket, UDPClient) {
 
     socket.pipe(writer)
 
-    const slowPayload = crypto.randomBytes(PACKET_SIZE)
-    const slowReader = createReader({ data: slowPayload, fast: false })
+    const payload = crypto.randomBytes(payloadSize)
+    const reader = createReader({ data: payload, fast })
 
-    slowReader.pipe(client)
-    await slowReader.startReading()
+    reader.pipe(client)
+    await reader.startReading()
 
-    const slowMessage = Buffer.concat(writer.result)
-
-    checkOnlyMessage({
-      caseAlias,
-      message: slowMessage,
-      results,
-      payload: slowPayload
-    })
-
-    writer.result.length = 0
-
-    const fastPayload = crypto.randomBytes(PACKET_SIZE)
-    const fastReader = createReader({ data: fastPayload, fast: true })
-
-    fastReader.pipe(client)
-    await fastReader.startReading()
-
-    const fastMessage = Buffer.concat(writer.result)
+    const message = Buffer.concat(writer.result)
 
     checkOnlyMessage({
       caseAlias,
-      message: fastMessage,
+      message,
       results,
-      payload: fastPayload
+      payload
     })
 
     socket.destroy()
@@ -129,7 +114,12 @@ async function socketTest (UDPSocket, UDPClient) {
 
   const errors = tryCountErrorHook()
 
-  await errors.try(() => testSynergy(DEFAULT_PORT))
+  await errors.try(() => testSynergy(DEFAULT_PORT, false, 300))
+  await errors.try(() => testSynergy(DEFAULT_PORT, false, 30_000))
+  await errors.try(() => testSynergy(DEFAULT_PORT, false, 100_000))
+  await errors.try(() => testSynergy(DEFAULT_PORT, true, 300))
+  await errors.try(() => testSynergy(DEFAULT_PORT, true, 30_000))
+  await errors.try(() => testSynergy(DEFAULT_PORT, true, 100_000))
 
   if (errors.count === 0) {
     console.log('[synergy.js] All test for passed\n')
