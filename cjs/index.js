@@ -173,7 +173,7 @@ var UDPClient = class extends import_node_stream2.Writable {
   /** @type {dgram.Socket} */
   #socket;
   /** @type {boolean} */
-  #allowWrite = false;
+  #allowWrite = true;
   /**
    * @param {UDPClientOptions} [options]
    */
@@ -191,10 +191,7 @@ var UDPClient = class extends import_node_stream2.Writable {
     this.#type = type;
   }
   _construct(callback) {
-    this.#start().then(() => {
-      this.#allowWrite = true;
-      callback(null);
-    }).catch(callback);
+    this.#start().then(() => callback(null)).catch(callback);
   }
   _write(chunk, encoding, callback) {
     this.#send(chunk, callback);
