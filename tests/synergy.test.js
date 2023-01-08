@@ -43,7 +43,7 @@ async function socketTest (UDPSocket, UDPClient) {
           await once(reader, 'readyToRead')
         }
 
-        if (!fast) await delay(10)
+        if (!fast) await delay(5)
       }
 
       await delay(50)
