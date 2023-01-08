@@ -20,7 +20,7 @@ class UDPClient extends Writable {
   #socket
 
   /** @type {boolean} */
-  #allowWrite = false
+  #allowWrite = true
 
   /**
    * @param {UDPClientOptions} [options]
@@ -43,10 +43,7 @@ class UDPClient extends Writable {
 
   _construct (callback) {
     this.#start()
-      .then(() => {
-        this.#allowWrite = true
-        callback(null)
-      })
+      .then(() => callback(null))
       .catch(callback)
   }
 
