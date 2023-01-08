@@ -27,7 +27,7 @@ async function socketTest (UDPSocket, UDPClient) {
   const createReader = ({ data, fast }) => {
     const reader = new Readable({
       read (size) {
-        reader.emit('readyToRead')
+        delay(1).then(() => reader.emit('readyToRead'))
       }
     })
 
