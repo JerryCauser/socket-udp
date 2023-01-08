@@ -40,4 +40,5 @@ export class UDPClient extends Writable {
     get address (): string
     get port (): number
     get family (): string
+    get allowWrite (): boolean
 }

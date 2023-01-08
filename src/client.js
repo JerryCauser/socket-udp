@@ -19,6 +19,9 @@ class UDPClient extends Writable {
   /** @type {dgram.Socket} */
   #socket
 
+  /** @type {boolean} */
+  #allowWrite = false
+
   /**
    * @param {UDPClientOptions} [options]
    */
@@ -40,7 +43,10 @@ class UDPClient extends Writable {
 
   _construct (callback) {
     this.#start()
-      .then(() => callback(null))
+      .then(() => {
+        this.#allowWrite = true
+        callback(null)
+      })
       .catch(callback)
   }
 
@@ -89,6 +95,16 @@ class UDPClient extends Writable {
 
   get family () {
     return this.#socket.address().family
+  }
+
+  get allowWrite () {
+    return this.#allowWrite
+  }
+
+  write (chunk, callback) {
+    this.#allowWrite = super.write(chunk, callback)
+
+    return this.#allowWrite
   }
 
   /**

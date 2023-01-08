@@ -17,6 +17,10 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -41,14 +45,25 @@ var DEFAULT_PORT = 44002;
 
 // src/socket.js
 var UDPSocket = class extends import_node_stream.Readable {
+  /** @type {number} */
   #port;
+  /** @type {string} */
   #address;
+  /** @type {'udp4'|'udp6'} */
   #type;
+  /** @type {dgram.Socket} */
   #socket;
+  /** @type {boolean} */
   #allowPush = false;
+  /** @type {boolean} */
   #pushMeta = false;
+  /** @type {(data:Buffer, head:MessageHead) => boolean} */
   #handleSocketMessage = (data, head) => this.handleMessage(data, head);
+  /** @type {(object:Error) => this} */
   #handleSocketError = (error) => this.destroy(error);
+  /**
+   * @param {UDPSocketOptions} [options]
+   */
   constructor(options) {
     const {
       type = "udp4",
@@ -125,6 +140,11 @@ var UDPSocket = class extends import_node_stream.Readable {
     this.#socket.off("error", this.#handleSocketError);
     this.#socket.off("message", this.#handleSocketMessage);
   }
+  /**
+   * @param {Buffer|any} body any in ObjectMode, otherwise should be Buffer
+   * @param {MessageHead} [head]
+   * @returns {boolean} allowPush
+   */
   handleMessage(body, head) {
     if (this.#allowPush) {
       if (this.#pushMeta) {
@@ -144,10 +164,19 @@ var import_node_dgram2 = __toESM(require("node:dgram"), 1);
 var import_node_stream2 = require("node:stream");
 var import_node_events2 = __toESM(require("node:events"), 1);
 var UDPClient = class extends import_node_stream2.Writable {
+  /** @type {number} */
   #port;
+  /** @type {string} */
   #address;
+  /** @type {'udp4'|'udp6'} */
   #type;
+  /** @type {dgram.Socket} */
   #socket;
+  /** @type {boolean} */
+  #allowWrite = false;
+  /**
+   * @param {UDPClientOptions} [options]
+   */
   constructor(options) {
     const {
       type = "udp4",
@@ -162,7 +191,10 @@ var UDPClient = class extends import_node_stream2.Writable {
     this.#type = type;
   }
   _construct(callback) {
-    this.#start().then(() => callback(null)).catch(callback);
+    this.#start().then(() => {
+      this.#allowWrite = true;
+      callback(null);
+    }).catch(callback);
   }
   _write(chunk, encoding, callback) {
     this.#send(chunk, callback);
@@ -197,6 +229,18 @@ var UDPClient = class extends import_node_stream2.Writable {
   get family() {
     return this.#socket.address().family;
   }
+  get allowWrite() {
+    return this.#allowWrite;
+  }
+  write(chunk, callback) {
+    this.#allowWrite = super.write(chunk, callback);
+    return this.#allowWrite;
+  }
+  /**
+   *
+   * @param {Buffer} buffer
+   * @param {function} callback
+   */
   #send(buffer, callback) {
     this.#socket.send(buffer, callback);
   }

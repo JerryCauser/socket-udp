@@ -61,6 +61,7 @@ Extends [`Writabable` Stream][node-writable]
 - `port`: `<number>`
 - `address`: `<string>`
 - `family`: `<string>`
+- `allowWrite`: `<boolean>`
 
 #### Events:
 ##### Event: `'ready'`
