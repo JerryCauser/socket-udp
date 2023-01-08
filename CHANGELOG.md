@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/JerryCauser/socket-udp/compare/v0.4.1...v0.4.2) (2023-01-08)
+
+
+### Features
+
+* add allowWrite ([ac1ed12](https://github.com/JerryCauser/socket-udp/commit/ac1ed1215642de4cef2363a6bb7686cb74e3fe1a))
+
 ### [0.4.1](https://github.com/JerryCauser/socket-udp/compare/v0.4.0...v0.4.1) (2023-01-03)
 
 ## [0.4.0](https://github.com/JerryCauser/socket-udp/compare/v0.3.0...v0.4.0) (2023-01-03)
