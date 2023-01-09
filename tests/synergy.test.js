@@ -80,7 +80,9 @@ async function socketTest (UDPSocket, UDPClient) {
   }
 
   async function testSynergy (port, fast, payloadSize) {
-    const caseAlias = `${alias} sending messages fast=${fast ? 1 : 0}, payloadSize=${payloadSize} ->`
+    const caseAlias = `${alias} sending messages fast=${
+      fast ? 1 : 0
+    }, payloadSize=${payloadSize} ->`
     const results = { fails: [] }
 
     const writer = createWriter()

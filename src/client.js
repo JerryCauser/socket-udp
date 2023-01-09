@@ -22,6 +22,11 @@ class UDPClient extends Writable {
   /** @type {boolean} */
   #allowWrite = true
 
+  /** @type {function} */
+  #drainHandler = () => {
+    this.#allowWrite = true
+  }
+
   /**
    * @param {UDPClientOptions} [options]
    */
@@ -42,6 +47,7 @@ class UDPClient extends Writable {
   }
 
   _construct (callback) {
+    this.on('drain', this.#drainHandler)
     this.#start()
       .then(() => callback(null))
       .catch(callback)
@@ -52,6 +58,7 @@ class UDPClient extends Writable {
   }
 
   _destroy (error, callback) {
+    this.off('drain', this.#drainHandler)
     if (error) {
       this.emit('error', error)
     }
