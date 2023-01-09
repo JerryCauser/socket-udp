@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.4](https://github.com/JerryCauser/socket-udp/compare/v0.4.3...v0.4.4) (2023-01-09)
+
+
+### Bug Fixes
+
+* allowWrite stuck in false forever without drain event handling ([d3eb638](https://github.com/JerryCauser/socket-udp/commit/d3eb638d2e3ce354003d67286743155e8f89746a))
+
 ### [0.4.3](https://github.com/JerryCauser/socket-udp/compare/v0.4.2...v0.4.3) (2023-01-08)
 
 
