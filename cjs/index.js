@@ -174,6 +174,10 @@ var UDPClient = class extends import_node_stream2.Writable {
   #socket;
   /** @type {boolean} */
   #allowWrite = true;
+  /** @type {function} */
+  #drainHandler = () => {
+    this.#allowWrite = true;
+  };
   /**
    * @param {UDPClientOptions} [options]
    */
@@ -191,12 +195,14 @@ var UDPClient = class extends import_node_stream2.Writable {
     this.#type = type;
   }
   _construct(callback) {
+    this.on("drain", this.#drainHandler);
     this.#start().then(() => callback(null)).catch(callback);
   }
   _write(chunk, encoding, callback) {
     this.#send(chunk, callback);
   }
   _destroy(error, callback) {
+    this.off("drain", this.#drainHandler);
     if (error) {
       this.emit("error", error);
     }
