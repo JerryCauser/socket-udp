@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.5](https://github.com/JerryCauser/socket-udp/compare/v0.4.4...v0.4.5) (2023-01-15)
+
+
+### Features
+
+* add possibility to pass socket options via constructor in client and socket ([d5e4597](https://github.com/JerryCauser/socket-udp/commit/d5e4597452c2f0c4f5863038bfa03ab6912cc397))
+
 ### [0.4.4](https://github.com/JerryCauser/socket-udp/compare/v0.4.3...v0.4.4) (2023-01-09)
 
 

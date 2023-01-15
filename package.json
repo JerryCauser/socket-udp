@@ -1,6 +1,6 @@
 {
   "name": "socket-udp",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Basic UDP Socket and Client",
   "main": "cjs/index.js",
   "module": "index.js",
