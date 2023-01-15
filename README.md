@@ -51,10 +51,16 @@ After just start the server `node server.js` and start your app `node app.js`. T
 Extends [`Writabable` Stream][node-writable]
 
 #### Arguments:
+Extends WritableOptions and [dgram.SocketOptions][node-dgram-socket-options]
 - `options` `<object>` – optional
   - `type` `<'udp4' | 'udp6'>` – optional. **Default** `'udp4'`
-  - `port` `<string | number>` – optional. **Default** `44002`
-  - `address` `<string>` – optional. **Default** `'127.0.0.1'` or `'::1'`
+  - `port` `<string | number>` – optional. Target port. **Default** `44002`
+  - `address` `<string>` – optional. Target address. **Default** `'127.0.0.1'` or `'::1'`
+  - `bindAddress` `<dgram.BindOptions>` – optional.
+    - `port` `<integer>` — optional.
+    - `address` `<string>` — optional.
+    - `exclusive` `<boolean>` — optional.
+    - `fd` `<integer>` — optional.
 
 #### Fields:
 - `origin`: [`<dgram.Socket>`][node-dgram-socket]
@@ -62,6 +68,8 @@ Extends [`Writabable` Stream][node-writable]
 - `address`: `<string>`
 - `family`: `<string>`
 - `allowWrite`: `<boolean>`
+- `targetPort`: `<number>`
+- `targetAddress`: `<number>`
 
 #### Events:
 ##### Event: `'ready'`
@@ -84,11 +92,12 @@ Extends [`Readable` Stream][node-readable]
 It is a UDP socket in `readable stream` form.
 
 #### Arguments:
+Extends ReadableOptions and [dgram.SocketOptions][node-dgram-socket-options]
 - `options` `<object>` – **required**
   - `type` `<'udp4' | 'udp6'>` – optional. **Default** `'udp4'`
   - `port` `<string | number>` – optional. **Default** `44002`
   - `address` `<string>` – optional. **Default** `'127.0.0.1'` or `'::1'`
-  - `pushMeta` `<boolean>` – optional. Will push not a raw message, but an object with removeInfo. Message data will be placed in field `body`. **Default** `false`
+  - `pushMeta` `<boolean>` – optional. Will push not a raw message, but an object with remoteInfo. Message data will be placed in field `body`. **Default** `false`
 
 #### Fields:
 - `origin`: [`<dgram.Socket>`][node-dgram-socket]
@@ -148,6 +157,7 @@ License ([MIT](LICENSE))
 [node-readable]: https://nodejs.org/api/stream.html#class-streamreadable
 [node-writable]: https://nodejs.org/api/stream.html#class-streamwritable
 [node-dgram-socket]: https://nodejs.org/api/dgram.html#class-dgramsocket
+[node-dgram-socket-options]: https://nodejs.org/api/dgram.html#dgramcreatesocketoptions-callback
 [client]: #class-udpclient
 [socket]: #class-udpsocket
 [constants]: src/constants.js

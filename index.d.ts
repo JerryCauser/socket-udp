@@ -9,7 +9,7 @@ export interface MessageHead extends dgram.RemoteInfo {
     body?: Buffer
 }
 
-export type UDPSocketOptions = ReadableOptions & {
+export type UDPSocketOptions = ReadableOptions & dgram.SocketOptions & {
     type?: dgram.SocketType
     port?: number
     address?: string,
@@ -28,10 +28,11 @@ export class UDPSocket extends Readable {
     handleMessage (body: Buffer | any, head?: MessageHead | undefined): boolean
 }
 
-export type UDPClientOptions = WritableOptions & {
+export type UDPClientOptions = WritableOptions & dgram.SocketOptions & {
     type?: dgram.SocketType
     port?: number
-    address?: string
+    address?: string,
+    bindOptions?: dgram.BindOptions
 } | undefined
 
 export class UDPClient extends Writable {
@@ -41,4 +42,6 @@ export class UDPClient extends Writable {
     get port (): number
     get family (): string
     get allowWrite (): boolean
+    get targetAddress (): string
+    get targetPort (): number
 }
