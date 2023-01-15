@@ -71,13 +71,28 @@ var UDPSocket = class extends import_node_stream.Readable {
       port = DEFAULT_PORT,
       objectMode = true,
       pushMeta = false,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal,
       ...readableOptions
     } = options ?? {};
-    super({ ...readableOptions, objectMode });
+    super({ ...readableOptions, signal, objectMode });
     this.#type = type;
     this.#address = address;
     this.#port = port;
     this.#pushMeta = pushMeta === true;
+    this.#socket = import_node_dgram.default.createSocket({
+      type,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal
+    });
   }
   _construct(callback) {
     this.#start().then(() => callback(null)).catch(callback);
@@ -122,7 +137,6 @@ var UDPSocket = class extends import_node_stream.Readable {
     await import_node_events.default.once(this.#socket, "close");
   }
   async #initSocket() {
-    this.#socket = import_node_dgram.default.createSocket({ type: this.#type });
     this.#socket.bind(this.#port, this.#address);
     const error = await Promise.race([
       import_node_events.default.once(this.#socket, "listening"),
@@ -164,12 +178,14 @@ var import_node_dgram2 = __toESM(require("node:dgram"), 1);
 var import_node_stream2 = require("node:stream");
 var import_node_events2 = __toESM(require("node:events"), 1);
 var UDPClient = class extends import_node_stream2.Writable {
-  /** @type {number} */
-  #port;
-  /** @type {string} */
-  #address;
   /** @type {'udp4'|'udp6'} */
   #type;
+  /** @type {number} */
+  #targetPort;
+  /** @type {string} */
+  #targetAddress;
+  /** @type {dgram.BindOptions} */
+  #bindOptions;
   /** @type {dgram.Socket} */
   #socket;
   /** @type {boolean} */
@@ -184,15 +200,32 @@ var UDPClient = class extends import_node_stream2.Writable {
   constructor(options) {
     const {
       type = "udp4",
-      port = 44002,
-      address = type === "udp4" ? "127.0.0.1" : "::1",
+      port: targetPort = 44002,
+      address: targetAddress = type === "udp4" ? "127.0.0.1" : "::1",
       objectMode = true,
+      bindOptions,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal,
       ...readableOptions
     } = options ?? {};
     super({ ...readableOptions, objectMode });
-    this.#port = port;
-    this.#address = address;
     this.#type = type;
+    this.#targetPort = Number(targetPort).valueOf();
+    this.#targetAddress = targetAddress;
+    this.#bindOptions = bindOptions ?? {};
+    this.#socket = import_node_dgram2.default.createSocket({
+      type,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal
+    });
   }
   _construct(callback) {
     this.on("drain", this.#drainHandler);
@@ -209,9 +242,20 @@ var UDPClient = class extends import_node_stream2.Writable {
     this.#stop().then(() => callback(error)).catch(callback);
   }
   async #start() {
-    this.#socket = import_node_dgram2.default.createSocket(this.#type);
-    this.#socket.connect(this.#port, this.#address);
-    await import_node_events2.default.once(this.#socket, "connect");
+    if (this.#bindOptions !== void 0) {
+      this.#socket.bind(this.#bindOptions);
+    }
+    this.#socket.connect(this.#targetPort, this.#targetAddress);
+    const error = await Promise.race([
+      Promise.all([
+        import_node_events2.default.once(this.#socket, "connect"),
+        import_node_events2.default.once(this.#socket, "listening")
+      ]),
+      import_node_events2.default.once(this.#socket, "error")
+    ]);
+    if (error instanceof Error) {
+      this.destroy(error);
+    }
     this.emit("ready");
   }
   async #stop() {
@@ -234,6 +278,12 @@ var UDPClient = class extends import_node_stream2.Writable {
   }
   get allowWrite() {
     return this.#allowWrite;
+  }
+  get targetPort() {
+    return this.#targetPort;
+  }
+  get targetAddress() {
+    return this.#targetAddress;
   }
   write(chunk, callback) {
     this.#allowWrite = super.write(chunk, callback);

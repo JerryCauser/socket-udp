@@ -7,14 +7,17 @@ import EventEmitter from 'node:events'
  * @constructor
  */
 class UDPClient extends Writable {
-  /** @type {number} */
-  #port
-
-  /** @type {string} */
-  #address
-
   /** @type {'udp4'|'udp6'} */
   #type
+
+  /** @type {number} */
+  #targetPort
+
+  /** @type {string} */
+  #targetAddress
+
+  /** @type {dgram.BindOptions} */
+  #bindOptions
 
   /** @type {dgram.Socket} */
   #socket
@@ -33,17 +36,34 @@ class UDPClient extends Writable {
   constructor (options) {
     const {
       type = 'udp4',
-      port = 44002,
-      address = type === 'udp4' ? '127.0.0.1' : '::1',
+      port: targetPort = 44002,
+      address: targetAddress = type === 'udp4' ? '127.0.0.1' : '::1',
       objectMode = true,
+      bindOptions,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal,
       ...readableOptions
     } = options ?? {}
 
     super({ ...readableOptions, objectMode })
 
-    this.#port = port
-    this.#address = address
     this.#type = type
+    this.#targetPort = Number(targetPort).valueOf()
+    this.#targetAddress = targetAddress
+    this.#bindOptions = bindOptions ?? {}
+    this.#socket = dgram.createSocket({
+      type,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal
+    })
   }
 
   _construct (callback) {
@@ -69,10 +89,22 @@ class UDPClient extends Writable {
   }
 
   async #start () {
-    this.#socket = dgram.createSocket(this.#type)
-    this.#socket.connect(this.#port, this.#address)
+    if (this.#bindOptions !== undefined) {
+      this.#socket.bind(this.#bindOptions)
+    }
+    this.#socket.connect(this.#targetPort, this.#targetAddress)
 
-    await EventEmitter.once(this.#socket, 'connect')
+    const error = await Promise.race([
+      Promise.all([
+        EventEmitter.once(this.#socket, 'connect'),
+        EventEmitter.once(this.#socket, 'listening')
+      ]),
+      EventEmitter.once(this.#socket, 'error')
+    ])
+
+    if (error instanceof Error) {
+      this.destroy(error)
+    }
 
     this.emit('ready')
   }
@@ -103,6 +135,14 @@ class UDPClient extends Writable {
 
   get allowWrite () {
     return this.#allowWrite
+  }
+
+  get targetPort () {
+    return this.#targetPort
+  }
+
+  get targetAddress () {
+    return this.#targetAddress
   }
 
   write (chunk, callback) {

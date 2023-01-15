@@ -38,15 +38,30 @@ class UDPSocket extends Readable {
       port = DEFAULT_PORT,
       objectMode = true,
       pushMeta = false,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal,
       ...readableOptions
     } = options ?? {}
 
-    super({ ...readableOptions, objectMode })
+    super({ ...readableOptions, signal, objectMode })
 
     this.#type = type
     this.#address = address
     this.#port = port
     this.#pushMeta = pushMeta === true
+    this.#socket = dgram.createSocket({
+      type,
+      reuseAddr,
+      ipv6Only,
+      recvBufferSize,
+      sendBufferSize,
+      lookup,
+      signal
+    })
   }
 
   _construct (callback) {
@@ -110,7 +125,6 @@ class UDPSocket extends Readable {
   }
 
   async #initSocket () {
-    this.#socket = dgram.createSocket({ type: this.#type })
     this.#socket.bind(this.#port, this.#address)
 
     const error = await Promise.race([
